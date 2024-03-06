@@ -23,7 +23,7 @@ public class PlayerControl : MonoBehaviour
         }
         
         var mouseVector = new Vector3(Input.mousePosition.x, Input.mousePosition.y, -cam.transform.position.z);
-        mousePosition = Camera.main.ScreenToWorldPoint(mouseVector);
+        mousePosition = cam.ScreenToWorldPoint(mouseVector);
 
         targetRotation = Quaternion.LookRotation(mousePosition - transform.position, Vector3.back);
         targetRotation.x = 0.0f;
