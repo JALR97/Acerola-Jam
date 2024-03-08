@@ -11,6 +11,18 @@ public class Vision : MonoBehaviour
 
 
 //structs
+    public struct EdgeInfo
+    {
+        public Vector3 pointA;
+        public Vector3 pointB;
+
+        public EdgeInfo(Vector3 _pointA, Vector3 _pointB)
+        {
+            pointA = _pointA;
+            pointB = _pointB;
+        }
+    }
+    
     public struct ViewCastInfo
     {
         public bool hit;
@@ -46,6 +58,9 @@ public class Vision : MonoBehaviour
 //Balance variables - serialized 
     [Range(0, 360)]public float viewAngle;
 
+    [SerializeField] private int findEdgeIterations = 1;
+    [SerializeField] private float edgeDistanceThreshold = 1;
+    
     public float viewRange;
     public LayerMask targetmask;
     public LayerMask obstacleMask;
@@ -103,12 +118,28 @@ private void OnDrawGizmos()
         int stepcount = Mathf.RoundToInt(viewAngle * meshResolution);
         float stepAngleSize = viewAngle / stepcount;
         List<Vector2> viewPoints = new List<Vector2>();
+        ViewCastInfo previousViewcast = new ViewCastInfo();
         
         for (int i = 0; i <= stepcount; i++)
         {
             float angle = - transform.eulerAngles.z - viewAngle / 2 + stepAngleSize * i;
             ViewCastInfo newViewCast = ViewCast(angle);
+
+            if (i > 0) {
+                bool edgeDistanceExceeded = Mathf.Abs(previousViewcast.distance - newViewCast.distance) > edgeDistanceThreshold;
+                if (previousViewcast.hit != newViewCast.hit || (previousViewcast.hit && newViewCast.hit && edgeDistanceExceeded)) {
+                    EdgeInfo edge = FindEdge(previousViewcast, newViewCast);
+                    if (edge.pointA != Vector3.zero) {
+                        viewPoints.Add(edge.pointA);
+                    }
+                    if (edge.pointB != Vector3.zero) {
+                        viewPoints.Add(edge.pointB);
+                    }
+                }
+            }
+            
             viewPoints.Add(newViewCast.point);
+            previousViewcast = newViewCast;
         }
 
         int vertexCount = viewPoints.Count + 1;
@@ -132,6 +163,29 @@ private void OnDrawGizmos()
         viewMesh.vertices = vertices;
         viewMesh.triangles = triangles;
         viewMesh.RecalculateNormals();
+    }
+
+    private EdgeInfo FindEdge(ViewCastInfo minVC, ViewCastInfo maxVC) {
+        float minAngle = minVC.angle;
+        float maxAngle = maxVC.angle;
+        Vector3 minPoint = minVC.point;
+        Vector3 maxPoint = maxVC.point;
+
+        for (int i = 0; i < findEdgeIterations; i++) {
+            float angle = (minAngle + maxAngle) / 2;
+            ViewCastInfo newViewcast = ViewCast(angle);
+            
+            bool edgeDistanceExceeded = Mathf.Abs(minVC.distance - newViewcast.distance) > edgeDistanceThreshold;
+            
+            if (newViewcast.hit == minVC.hit && !edgeDistanceExceeded) {
+                minAngle = angle;
+                minPoint = newViewcast.point;
+            } else {
+                maxAngle = angle;
+                maxPoint = newViewcast.point;
+            }
+        }
+        return new EdgeInfo(minPoint, maxPoint);
     }
     
     private IEnumerator FindTargetsCycle(float delay)
