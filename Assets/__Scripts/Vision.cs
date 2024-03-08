@@ -49,6 +49,7 @@ public class Vision : MonoBehaviour
 
 //External References
     [SerializeField] private Transform lookGizmo;
+    [SerializeField] private Transform PositionParent;
     
 //-----------------//Variables//-----------------//
 //Process variables - private

@@ -121,14 +121,14 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: MC
     originalName: 
-    pivot: {x: 0.5666667, y: 0}
+    pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     rect:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 30
+      width: 64
       height: 64
     spriteID: d6b00862a576da24bae041b58e289d7d
     spriteBone: []
@@ -151,9 +151,9 @@ ScriptedImporter:
     - name: MC
       frameIndex: 0
       cellRect:
-        x: 15
+        x: 0
         y: 0
-        width: 30
+        width: 64
         height: 64
       spriteId: d6b00862a576da24bae041b58e289d7d
     linkedCells: []
