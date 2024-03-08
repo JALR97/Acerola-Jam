@@ -52,17 +52,14 @@ public class Vision : MonoBehaviour
     [SerializeField] private Transform PositionParent;
     
 //-----------------//Variables//-----------------//
-//Process variables - private
     private Vector3 lookDirection;
     
-
-//Balance variables - serialized 
     [Range(0, 360)]public float viewAngle;
-
+    public float viewRange;
+    
     [SerializeField] private int findEdgeIterations = 1;
     [SerializeField] private float edgeDistanceThreshold = 1;
     
-    public float viewRange;
     public LayerMask targetmask;
     public LayerMask obstacleMask;
 

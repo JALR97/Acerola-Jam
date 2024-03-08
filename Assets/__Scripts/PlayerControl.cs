@@ -9,16 +9,22 @@ public class PlayerControl : MonoBehaviour
     [SerializeField] private float rotationSpeed;
     [SerializeField] private Transform rotation_GO;
     [SerializeField] private Camera cam;
-    [SerializeField] private Vision vs;
+
+    private bool _canWalk = true;
     
     private Vector2 inputVector = new Vector2();
     private Quaternion targetRotation;
     private Vector3 mousePosition;
+
+    public void AimSwitch() {
+        _canWalk = !_canWalk;
+    }
+    
     void Update()
     {
         inputVector.x = Input.GetAxisRaw("Horizontal");
         inputVector.y = Input.GetAxisRaw("Vertical");
-        if (inputVector.magnitude > 0)
+        if (inputVector.magnitude > 0 && _canWalk)
         {
             inputVector.Normalize();
             transform.Translate(rotation_GO.TransformDirection(inputVector) * (walkSpeed * Time.deltaTime));
