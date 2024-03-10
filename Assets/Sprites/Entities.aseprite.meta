@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 3098986dcfaa2aa47a662a1e8e533f43
+guid: 7ce9af1e988aa404da04a5c1afcca712
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -119,18 +119,18 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: MC
+  - name: Entities
     originalName: 
-    pivot: {x: 0.54838705, y: 0}
+    pivot: {x: 0.5357143, y: -0.11538462}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     rect:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 31
-      height: 64
-    spriteID: d6b00862a576da24bae041b58e289d7d
+      width: 28
+      height: 26
+    spriteID: 2e9556bc90dee374b93700d733794ca8
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -142,23 +142,23 @@ ScriptedImporter:
   spriteSheetImportData: []
   asepriteLayers:
   - layerIndex: 0
-    guid: -1638522770
-    name: MC
+    guid: -1773242375
+    name: Entities
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: MC
+    - name: Entities
       frameIndex: 0
       cellRect:
-        x: 15
-        y: 0
-        width: 31
-        height: 64
-      spriteId: d6b00862a576da24bae041b58e289d7d
+        x: 1
+        y: 3
+        width: 28
+        height: 26
+      spriteId: 2e9556bc90dee374b93700d733794ca8
     linkedCells: []
     parentIndex: -1
   platformSettings: []
   secondarySpriteTextures: []
   spritePackingTag: 
-  canvasSize: {x: 64, y: 64}
+  canvasSize: {x: 32, y: 32}
