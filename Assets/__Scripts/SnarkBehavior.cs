@@ -1,15 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using Pathfinding;
+using UnityEngine.Serialization;
 
+[SuppressMessage("ReSharper", "BadControlBracesIndent")]
 public class SnarkBehavior : MonoBehaviour
 {
     //Structures
     private enum SnarkState{
         STAND_BY,
         STALK,
+        PREP,
         HIDE,
         FIGHT
     }
@@ -21,7 +25,6 @@ public class SnarkBehavior : MonoBehaviour
     [SerializeField] private Transform playerBack;
     
     //Balance
-    [SerializeField] private float roamSpeed;
     [SerializeField] private float stalkSpeed;
     [SerializeField] private float hideSpeed;
     [SerializeField] private float attackSpeed;
@@ -29,24 +32,52 @@ public class SnarkBehavior : MonoBehaviour
 
     [SerializeField] private float aggressiveTime;
     [SerializeField] private float stalkLimitTime;
+    [SerializeField] private float hideTime = 3;
+    [SerializeField] private float pathingCallTime = 0.5f;
     
     [SerializeField] private float inactiveDistance;
-    [SerializeField] private float attackDistance;
+    [FormerlySerializedAs("attackDistance")] [SerializeField] private float aggroDistance;
     [SerializeField] private float stalkCloseDistance;
     //Internal
+    private bool seenOnce = false;
     private SnarkState currentState = SnarkState.STAND_BY;
+    private SnarkState prevState = SnarkState.STAND_BY;//debug var
     private float minDistanceToWaypoint = 3.0f;
     private float distanceToPlayer;
-    private Path path;
+    private Path path = null;
     private int currentWaypoint = 0;
-    private bool endOfPath = false;
+    private float prepTimer = 0;
+
+    private IEnumerator  tempCoroutine;
+    //private bool endOfPath = false;
     
     //Functions
     public void Seen() {
-        if (currentState == SnarkState.STALK) {
+        if (!seenOnce && (currentState == SnarkState.STALK || currentState == SnarkState.PREP)) {
             currentState = SnarkState.HIDE;
+            Invoke("Reasses", hideTime);
+            seenOnce = true;
+        }else if (seenOnce && (currentState == SnarkState.STALK || currentState == SnarkState.PREP)) {
+            currentState = SnarkState.FIGHT;
+            tempCoroutine = PathingCall(SnarkState.FIGHT, player);
+            StartCoroutine(tempCoroutine);
         }
     }
+    private void Reasses() {
+        if (distanceToPlayer <= stalkCloseDistance) {
+            currentState = SnarkState.FIGHT;
+            path = null;
+            tempCoroutine = PathingCall(SnarkState.FIGHT, player);
+            StartCoroutine(tempCoroutine);
+        }
+        else {
+            currentState = SnarkState.STALK;
+            path = null;
+            tempCoroutine = PathingCall(SnarkState.STALK, playerBack);
+            StartCoroutine(tempCoroutine);
+        }
+    }
+    
     void OnPathComplete(Path p) {
         if (!p.error) {
             path = p;
@@ -59,38 +90,98 @@ public class SnarkBehavior : MonoBehaviour
         //seeker.StartPath(rb.position, player.position, OnPathComplete);
         
     }
+    IEnumerator PathingCall(SnarkState startingState, Transform target) {
+        while (currentState == startingState) {
+            seeker.StartPath(rb.position, target.position, OnPathComplete);
+            yield return new WaitForSeconds(pathingCallTime);
+        }
+    }
+
+    private void Update() {
+        //debug
+        if (prevState != currentState) {
+            prevState = currentState;
+            Debug.Log(currentState);    
+        }
+        
+    }
 
     private void FixedUpdate() {
         distanceToPlayer = Vector2.Distance(player.position, transform.position);
         if (distanceToPlayer <= inactiveDistance && currentState == SnarkState.STAND_BY) {
             currentState = SnarkState.STALK;
-            seeker.StartPath(rb.position, player.position, OnPathComplete);
-        }
-        else if (distanceToPlayer > inactiveDistance) {
-            currentState = SnarkState.STAND_BY;
+            tempCoroutine = PathingCall(SnarkState.STALK, playerBack);
+            StartCoroutine(tempCoroutine);
+        }else if (distanceToPlayer <= aggroDistance && currentState != SnarkState.FIGHT) {
+            currentState = SnarkState.FIGHT;
+            path = null;
+            tempCoroutine = PathingCall(SnarkState.FIGHT, player);
+            StartCoroutine(tempCoroutine);
+        }else if (distanceToPlayer <= stalkCloseDistance && currentState == SnarkState.STALK) {
+            currentState = SnarkState.PREP;
             path = null;
         }
-        
-        if (path == null) {
-            return; //no path
-        }
 
-        if (currentWaypoint >= path.vectorPath.Count) {
-            endOfPath = true;
-            return;
-        }else
-            endOfPath = false;
-        
-        //Where we should be moving to according to path
         var position = rb.position;
-        Vector2 pathDirection = ((Vector2)path.vectorPath[currentWaypoint] - position).normalized;
-        //Movement might go here
-        //
+        //Stalk
+        if (currentState == SnarkState.STALK && path != null) {
+            Vector2 pathDirection = ((Vector2)path.vectorPath[currentWaypoint] - position).normalized;
+            //rb.AddForce(pathDirection * (Time.fixedDeltaTime * stalkSpeed), ForceMode2D.Force);
+            rb.velocity = pathDirection * (Time.fixedDeltaTime * stalkSpeed);
+            
+        //Prep
+        }else if (currentState == SnarkState.PREP) {
+            Vector2 awayFromPlayer;
+            if (distanceToPlayer < stalkCloseDistance) {
+                awayFromPlayer = (rb.position - (Vector2)player.position).normalized;
+                Debug.Log("Away");
+            }
+            else {
+                awayFromPlayer = ((Vector2)player.position - rb.position).normalized;
+                Debug.Log("Towards");
+            }
+            //rb.AddForce(awayFromPlayer * (Time.fixedDeltaTime * hideSpeed), ForceMode2D.Force);
+            rb.velocity = awayFromPlayer * (Time.fixedDeltaTime * hideSpeed);
+            prepTimer += Time.fixedDeltaTime;
+            if (prepTimer >= stalkLimitTime) {
+                currentState = SnarkState.FIGHT;
+                path = null;
+                tempCoroutine = PathingCall(SnarkState.FIGHT, player);
+                StartCoroutine(tempCoroutine);
+            } 
+            
+        //Fight
+        }else if (currentState == SnarkState.FIGHT && path != null) {
+            Vector2 pathDirection = ((Vector2)path.vectorPath[currentWaypoint] - position).normalized;
+            //rb.AddForce(pathDirection * (Time.fixedDeltaTime * attackSpeed), ForceMode2D.Force);
+            rb.velocity = pathDirection * (Time.fixedDeltaTime * attackSpeed);
+            
+        //Hide
+        }else if (currentState == SnarkState.HIDE) {
+            var awayFromPlayer = (rb.position - (Vector2)player.position).normalized;
+            //rb.AddForce(awayFromPlayer * (Time.fixedDeltaTime * hideSpeed), ForceMode2D.Force);
+            rb.velocity = awayFromPlayer * (Time.fixedDeltaTime * hideSpeed);
+            return;
+        }
         
         //check path progress
+        if (path == null) {
+            return;
+        }
         float distance = Vector2.Distance(path.vectorPath[currentWaypoint], position);
         if (distance <= minDistanceToWaypoint) {
             currentWaypoint++;
         }
+    }
+    
+    //Gizmos - Debug
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, aggroDistance);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, inactiveDistance);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, stalkCloseDistance);
     }
 }

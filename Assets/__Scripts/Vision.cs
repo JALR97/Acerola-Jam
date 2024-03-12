@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
-using System.Collections.Generic;
 public class Vision : MonoBehaviour
 {
 //-----------------//Data structures//-----------------//
@@ -208,6 +207,7 @@ private void OnDrawGizmos()
                 if (!Physics2D.Raycast(transform.position, dirToTarget, distToTarget, obstacleMask))
                 {
                     visibleTargets.Add(target.transform);
+                    target.GetComponent<SnarkBehavior>().Seen();
                 }
             }
         }
