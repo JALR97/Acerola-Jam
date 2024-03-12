@@ -121,16 +121,36 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: MC
     originalName: 
-    pivot: {x: 0.54838705, y: 0}
+    pivot: {x: 0.54545456, y: 0}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 67
+      width: 33
+      height: 64
+    spriteID: d6b00862a576da24bae041b58e289d7d
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 67}
+  - name: MC_Frame_1
+    originalName: 
+    pivot: {x: 0.5, y: -0.090909086}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     rect:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 31
-      height: 64
-    spriteID: d6b00862a576da24bae041b58e289d7d
+      width: 98
+      height: 55
+    spriteID: ceccf7abbb9d8fc4b983605dfd7e26ab
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -148,17 +168,25 @@ ScriptedImporter:
     layerType: 0
     blendMode: 0
     cells:
-    - name: MC
+    - name: MC_Frame_0
       frameIndex: 0
       cellRect:
-        x: 15
+        x: 14
         y: 0
-        width: 31
+        width: 33
         height: 64
       spriteId: d6b00862a576da24bae041b58e289d7d
+    - name: MC_Frame_1
+      frameIndex: 1
+      cellRect:
+        x: 15
+        y: 5
+        width: 98
+        height: 55
+      spriteId: ceccf7abbb9d8fc4b983605dfd7e26ab
     linkedCells: []
     parentIndex: -1
   platformSettings: []
   secondarySpriteTextures: []
   spritePackingTag: 
-  canvasSize: {x: 64, y: 64}
+  canvasSize: {x: 128, y: 64}

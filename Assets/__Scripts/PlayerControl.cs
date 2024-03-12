@@ -9,7 +9,10 @@ public class PlayerControl : MonoBehaviour
     [SerializeField] private float rotationSpeed;
     [SerializeField] private Transform rotation_GO;
     [SerializeField] private Camera cam;
+    [SerializeField] private SpriteRenderer _spriteRenderer;
 
+    [SerializeField] private Sprite[] MC_sprites;
+    
     private bool _canWalk = true;
     
     private Vector2 inputVector = new Vector2();
@@ -38,6 +41,11 @@ public class PlayerControl : MonoBehaviour
         targetRotation.y = 0.0f;
         
         rotation_GO.rotation = Quaternion.Lerp (rotation_GO.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+        if (rotation_GO.transform.up.x < 0) 
+            _spriteRenderer.sprite = MC_sprites[0];
+        else
+            _spriteRenderer.sprite = MC_sprites[1];
     }
 
     private void OnDrawGizmos()
