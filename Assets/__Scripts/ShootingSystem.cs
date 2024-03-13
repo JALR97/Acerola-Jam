@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class ShootingSystem : MonoBehaviour
 {
@@ -11,14 +12,21 @@ public class ShootingSystem : MonoBehaviour
 
     [SerializeField] private Vision viewCone;
     [SerializeField] private Vision roundView;
+
+    [SerializeField] private DrawManager _drawManager;
     
     //Balance Vars
     [SerializeField] private int maxAmmo;
     [SerializeField] private float shotDamage;
     [SerializeField] private float aimAngleChange;
+    [SerializeField] private float aimLineAngleChange = 25;
     [SerializeField] private float viewRangeChange;
     [SerializeField] private float areaRangeChange;
     [SerializeField] private float aimTime = 2.0f;
+    [SerializeField] private float aimLineStart = 1;
+    [SerializeField] private float aimLineEnd = 5;
+    [SerializeField] private float aimLineAngle = 15;
+    
     
     //Private vars
     private int _currentAmmo;
@@ -27,6 +35,7 @@ public class ShootingSystem : MonoBehaviour
     private float defaultViewAngle;
     private float defaultViewRange;
     private float defaultAreaRange;
+    private float defaultAimAngle;
     
     //Public Functions
     public bool hasAmmo(int qty = 1) {
@@ -57,11 +66,13 @@ public class ShootingSystem : MonoBehaviour
         float startViewAngle = viewCone.viewAngle;
         float startViewRange = viewCone.viewRange;
         float startAreaRange = roundView.viewRange;
+        float startAimAngle = defaultAimAngle;
         
         float targetViewAngle = defaultViewAngle - aimAngleChange;
         float targetViewRange = defaultViewRange + viewRangeChange;
         float targetAreaRange = defaultAreaRange - areaRangeChange;
-
+        float targetAimAngle = defaultAimAngle - aimLineAngleChange;
+        
         float timeElapsed = 0;
 
         while (timeElapsed < aimTime) {
@@ -69,21 +80,25 @@ public class ShootingSystem : MonoBehaviour
             viewCone.viewAngle = Mathf.Lerp(startViewAngle, targetViewAngle, t);
             viewCone.viewRange = Mathf.Lerp(startViewRange, targetViewRange, t);
             roundView.viewRange = Mathf.Lerp(startAreaRange, targetAreaRange, t);
+            aimLineAngle = Mathf.Lerp(startAimAngle, targetAimAngle, t);
             timeElapsed += Time.deltaTime;
             yield return null;
         }
         viewCone.viewAngle = targetViewAngle;
         viewCone.viewRange = targetViewRange;
         roundView.viewRange = targetAreaRange;
+        aimLineAngle = targetAimAngle;
     }
     private IEnumerator AimUpLerp() {
         float startViewAngle = viewCone.viewAngle;
         float startViewRange = viewCone.viewRange;
         float startAreaRange = roundView.viewRange;
+        float startAimAngle = aimLineAngle;
         
         float targetViewAngle = defaultViewAngle;
         float targetViewRange = defaultViewRange;
         float targetAreaRange = defaultAreaRange;
+        float targetAimAngle = defaultAimAngle;
         
         float timeElapsed = 0;
         while (timeElapsed < aimTime) {
@@ -91,30 +106,46 @@ public class ShootingSystem : MonoBehaviour
             viewCone.viewAngle = Mathf.Lerp(startViewAngle, targetViewAngle, t);
             viewCone.viewRange = Mathf.Lerp(startViewRange, targetViewRange, t);
             roundView.viewRange = Mathf.Lerp(startAreaRange, targetAreaRange, t);
+            aimLineAngle = Mathf.Lerp(startAimAngle, targetAimAngle, t);
             timeElapsed += Time.deltaTime;
             yield return null;
         }
         viewCone.viewAngle = targetViewAngle;
         viewCone.viewRange = targetViewRange;
         roundView.viewRange = targetAreaRange;
+        aimLineAngle = targetAimAngle;
     }
 
     private void Start() {
         defaultViewAngle = viewCone.viewAngle;
         defaultViewRange = viewCone.viewRange;
         defaultAreaRange = roundView.viewRange;
+        defaultAimAngle = roundView.viewRange;
     }
-
+    
     private void Update() {
         if (Input.GetKeyDown(KeyCode.Mouse1)) {
             _playerControl.AimSwitch();
             StopAllCoroutines();
             StartCoroutine(nameof(AimDownLerp));
+            _drawManager.DrawLines();
         }
         if (Input.GetKeyUp(KeyCode.Mouse1)) {
             _playerControl.AimSwitch();
             StopAllCoroutines();
             StartCoroutine(nameof(AimUpLerp));
+            _drawManager.ClearLines();
+        }
+    }
+
+    private void LateUpdate() {
+        if (Input.GetKey(KeyCode.Mouse1)) {
+            Vector3 viewAngleA = viewCone.DirFromAngle(-viewCone.viewAngle / 2 + aimLineAngle, false);
+            Vector3 viewAngleB = viewCone.DirFromAngle(viewCone.viewAngle / 2 - aimLineAngle, false);
+
+            var position = viewCone.transform.position;
+            _drawManager.UpdateLine(1, position + viewAngleA * aimLineStart, position + viewAngleA * aimLineEnd);
+            _drawManager.UpdateLine(2, position + viewAngleB * aimLineStart, position + viewAngleB * aimLineEnd);
         }
     }
 }

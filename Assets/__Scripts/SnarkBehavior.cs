@@ -107,6 +107,7 @@ public class SnarkBehavior : MonoBehaviour
     }
 
     private void FixedUpdate() {
+        //State change conditions
         distanceToPlayer = Vector2.Distance(player.position, transform.position);
         if (distanceToPlayer <= inactiveDistance && currentState == SnarkState.STAND_BY) {
             currentState = SnarkState.STALK;
@@ -121,7 +122,8 @@ public class SnarkBehavior : MonoBehaviour
             currentState = SnarkState.PREP;
             path = null;
         }
-
+        
+        //Movement section based on state
         var position = rb.position;
         //Stalk
         if (currentState == SnarkState.STALK && path != null) {
@@ -140,8 +142,8 @@ public class SnarkBehavior : MonoBehaviour
                 awayFromPlayer = ((Vector2)player.position - rb.position).normalized;
                 Debug.Log("Towards");
             }
-            //rb.AddForce(awayFromPlayer * (Time.fixedDeltaTime * hideSpeed), ForceMode2D.Force);
-            rb.velocity = awayFromPlayer * (Time.fixedDeltaTime * hideSpeed);
+            rb.AddForce(awayFromPlayer * (Time.fixedDeltaTime * hideSpeed), ForceMode2D.Force);
+            //rb.velocity = awayFromPlayer * (Time.fixedDeltaTime * hideSpeed);
             prepTimer += Time.fixedDeltaTime;
             if (prepTimer >= stalkLimitTime) {
                 currentState = SnarkState.FIGHT;
@@ -170,7 +172,7 @@ public class SnarkBehavior : MonoBehaviour
         }
         float distance = Vector2.Distance(path.vectorPath[currentWaypoint], position);
         if (distance <= minDistanceToWaypoint) {
-            currentWaypoint++;
+            currentWaypoint = Mathf.Min(currentWaypoint + 1, path.vectorPath.Count - 1);
         }
     }
     

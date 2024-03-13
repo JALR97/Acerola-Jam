@@ -65,6 +65,7 @@ public class Vision : MonoBehaviour
     public List<Transform> visibleTargets = new List<Transform>();
     public float meshResolution;
     
+    
 //-----------------//Functions//-----------------//
 //Built-in
 private void Start()
