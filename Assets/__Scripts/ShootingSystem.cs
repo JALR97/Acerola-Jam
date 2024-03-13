@@ -10,12 +10,15 @@ public class ShootingSystem : MonoBehaviour
 {
     //Component
     [SerializeField] private PlayerControl _playerControl;
+    [SerializeField] private GameObject shotFX;
 
     [SerializeField] private Vision viewCone;
     [SerializeField] private Vision roundView;
 
     [SerializeField] private DrawManager _drawManager;
     [SerializeField] private LayerMask targetMask;
+    [SerializeField] private LayerMask obstacleMask;
+    
     
     //Balance Vars
     [SerializeField] private int maxAmmo;
@@ -152,12 +155,16 @@ public class ShootingSystem : MonoBehaviour
                                             viewCone.viewAngle / 2 - aimLineAngle);
             Vector3 shotVector = viewCone.DirFromAngle(shotAngle, false);
             var hit = Physics2D.Raycast(transform.position, shotVector, shotRange, targetMask);
+            var wallHit = Physics2D.Raycast(transform.position, shotVector, shotRange, obstacleMask);
             if (hit.collider != null) {
                 //Hit a target
+                Instantiate(shotFX, hit.point, Quaternion.identity);
                 var enemy = hit.transform;
                 enemy.GetComponent<Health>().Damage(shotDamage);
                 //Knockback
                 //
+            }else if (wallHit.collider != null) {
+                Instantiate(shotFX, wallHit.point, Quaternion.identity);
             }
         }
     }

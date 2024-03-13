@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,6 +18,10 @@ public class Health : MonoBehaviour
         if (currentHealth <= 0) {
             Death();
         }
+    }
+
+    private void Start() {
+        currentHealth = maxHealth;
     }
 
     public void Heal(int hp) {
