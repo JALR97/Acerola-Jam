@@ -22,7 +22,9 @@ public class VisionEditor : Editor
         Handles.color = Color.red;
         foreach (Transform visibleTarget in vision.visibleTargets)
         {
-            Handles.DrawLine(visibleTarget.position, vision.transform.position);
+            if (visibleTarget != null) {
+                Handles.DrawLine(visibleTarget.position, vision.transform.position);
+            }
         }
     }
 }

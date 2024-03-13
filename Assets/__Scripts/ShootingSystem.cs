@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 public class ShootingSystem : MonoBehaviour
 {
@@ -14,10 +15,12 @@ public class ShootingSystem : MonoBehaviour
     [SerializeField] private Vision roundView;
 
     [SerializeField] private DrawManager _drawManager;
+    [SerializeField] private LayerMask targetMask;
     
     //Balance Vars
     [SerializeField] private int maxAmmo;
-    [SerializeField] private float shotDamage;
+    [SerializeField] private int shotDamage;
+    [SerializeField] private float shotRange;
     [SerializeField] private float aimAngleChange;
     [SerializeField] private float aimLineAngleChange = 25;
     [SerializeField] private float viewRangeChange;
@@ -36,6 +39,8 @@ public class ShootingSystem : MonoBehaviour
     private float defaultViewRange;
     private float defaultAreaRange;
     private float defaultAimAngle;
+
+    private bool aiming = false;
     
     //Public Functions
     public bool hasAmmo(int qty = 1) {
@@ -124,17 +129,36 @@ public class ShootingSystem : MonoBehaviour
     }
     
     private void Update() {
+        //Start to aim
         if (Input.GetKeyDown(KeyCode.Mouse1)) {
             _playerControl.AimSwitch();
             StopAllCoroutines();
             StartCoroutine(nameof(AimDownLerp));
             _drawManager.DrawLines();
+            aiming = true;
         }
-        if (Input.GetKeyUp(KeyCode.Mouse1)) {
+        
+        //Stop aiming
+        if (Input.GetKeyUp(KeyCode.Mouse1)) { 
             _playerControl.AimSwitch();
             StopAllCoroutines();
             StartCoroutine(nameof(AimUpLerp));
             _drawManager.ClearLines();
+            aiming = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Mouse0) && aiming) {//Need to add fire rate limit, not free to mouse click
+            float shotAngle = Random.Range(-viewCone.viewAngle / 2 + aimLineAngle,
+                                            viewCone.viewAngle / 2 - aimLineAngle);
+            Vector3 shotVector = viewCone.DirFromAngle(shotAngle, false);
+            var hit = Physics2D.Raycast(transform.position, shotVector, shotRange, targetMask);
+            if (hit.collider != null) {
+                //Hit a target
+                var enemy = hit.transform;
+                enemy.GetComponent<Health>().Damage(shotDamage);
+                //Knockback
+                //
+            }
         }
     }
 

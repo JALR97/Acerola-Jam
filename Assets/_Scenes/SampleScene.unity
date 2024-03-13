@@ -287,8 +287,12 @@ MonoBehaviour:
   viewCone: {fileID: 91125220}
   roundView: {fileID: 91125222}
   _drawManager: {fileID: 91125223}
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 0
   maxAmmo: 15
   shotDamage: 5
+  shotRange: 20
   aimAngleChange: 30
   aimLineAngleChange: -6
   viewRangeChange: 12
@@ -4256,7 +4260,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.10526316, g: 0.08552632, b: 0.125, a: 1}
+  m_Color: {r: 0.10526316, g: 0.08552632, b: 0.125, a: 0.9490196}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
