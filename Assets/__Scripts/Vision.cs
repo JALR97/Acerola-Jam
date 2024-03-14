@@ -197,6 +197,11 @@ private void OnDrawGizmos()
 
     void FindVisibleTargets()
     {
+        foreach (var target in visibleTargets) {
+            if (target != null) {
+                target.GetComponent<SnarkBehavior>().UnSeen();    
+            }
+        }
         visibleTargets.Clear();
         Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, viewRange,targetmask);
         foreach (var target in cols)

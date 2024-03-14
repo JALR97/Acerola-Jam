@@ -23,13 +23,25 @@ public class SnarkBehavior : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Transform player;
     [SerializeField] private Transform playerBack;
+    [SerializeField] private Animator _animator;
+    
+    [SerializeField] private Collider2D dashCollider;
+    [SerializeField] private Collider2D normalCollider;
+    
+    [SerializeField] private SpriteRenderer spriteRenderer;
     
     //Balance
     [SerializeField] private float stalkSpeed;
     [SerializeField] private float hideSpeed;
     [SerializeField] private float attackSpeed;
-    [SerializeField] private float attackDamage;
-
+    [SerializeField] private float dashSpeed = 3000;
+    [SerializeField] private int attackDamage;
+    [SerializeField] private float attackcooldown;
+    [SerializeField] private float dashTime;
+    [SerializeField] private float dashStopTime = 1.5f;
+    
+    [SerializeField] private float fadeDistance = 20f;
+    
     [SerializeField] private float aggressiveTime;
     [SerializeField] private float stalkLimitTime;
     [SerializeField] private float hideTime = 3;
@@ -47,12 +59,17 @@ public class SnarkBehavior : MonoBehaviour
     private Path path = null;
     private int currentWaypoint = 0;
     private float prepTimer = 0;
+    private bool dashing = false;
+    private float timer = 0;
+    private float fadeProp = 0;
 
+    private bool seen = false;
     private IEnumerator  tempCoroutine;
     //private bool endOfPath = false;
     
     //Functions
     public void Seen() {
+        seen = true;
         if (!seenOnce && (currentState == SnarkState.STALK || currentState == SnarkState.PREP)) {
             currentState = SnarkState.HIDE;
             Invoke("Reasses", hideTime);
@@ -62,6 +79,10 @@ public class SnarkBehavior : MonoBehaviour
             tempCoroutine = PathingCall(SnarkState.FIGHT, player);
             StartCoroutine(tempCoroutine);
         }
+    }
+
+    public void UnSeen() {
+        seen = false;
     }
     private void Reasses() {
         if (distanceToPlayer <= stalkCloseDistance) {
@@ -98,12 +119,23 @@ public class SnarkBehavior : MonoBehaviour
     }
 
     private void Update() {
-        //debug
-        if (prevState != currentState) {
-            prevState = currentState;
-            Debug.Log(currentState);    
+        if (seen) {
+            fadeProp = 1;
         }
-        
+        else {
+            if (distanceToPlayer <= aggroDistance) {
+                fadeProp = 1;
+            }
+            else if(distanceToPlayer >= fadeDistance) {
+                fadeProp = 0;
+            }
+            else {
+                fadeProp = 1 - (distanceToPlayer - aggroDistance) / (fadeDistance - aggroDistance);
+            }
+        }
+        Color tempCol = spriteRenderer.color;
+        tempCol.a = fadeProp;
+        spriteRenderer.color = tempCol;
     }
 
     private void FixedUpdate() {
@@ -136,11 +168,9 @@ public class SnarkBehavior : MonoBehaviour
             Vector2 awayFromPlayer;
             if (distanceToPlayer < stalkCloseDistance) {
                 awayFromPlayer = (rb.position - (Vector2)player.position).normalized;
-                Debug.Log("Away");
             }
             else {
                 awayFromPlayer = ((Vector2)player.position - rb.position).normalized;
-                Debug.Log("Towards");
             }
             rb.AddForce(awayFromPlayer * (Time.fixedDeltaTime * hideSpeed), ForceMode2D.Force);
             //rb.velocity = awayFromPlayer * (Time.fixedDeltaTime * hideSpeed);
@@ -154,9 +184,31 @@ public class SnarkBehavior : MonoBehaviour
             
         //Fight
         }else if (currentState == SnarkState.FIGHT && path != null) {
-            Vector2 pathDirection = ((Vector2)path.vectorPath[currentWaypoint] - position).normalized;
-            //rb.AddForce(pathDirection * (Time.fixedDeltaTime * attackSpeed), ForceMode2D.Force);
-            rb.velocity = pathDirection * (Time.fixedDeltaTime * attackSpeed);
+            timer += Time.deltaTime;
+            if (!dashing && timer >= attackcooldown) {
+                if (distanceToPlayer <= aggroDistance) {
+                    StartDash();
+                    rb.velocity = Vector2.zero;
+                }
+                else {
+                    Vector2 pathDirection = ((Vector2)path.vectorPath[currentWaypoint] - position).normalized;
+                    rb.velocity = pathDirection * (Time.fixedDeltaTime * attackSpeed);
+                }
+            }
+            else if(dashing) {
+                if (timer >= dashTime) {
+                    Vector2 dashDirection = ((Vector2)player.position - position).normalized;
+                    rb.velocity = dashDirection * (Time.fixedDeltaTime * dashSpeed);
+                    dashing = false;
+                    _animator.CrossFade("SnarkWalk", 2, 0);
+                    timer = 0;
+                }
+            }else if (!dashing && timer < attackcooldown && timer >= dashStopTime) {
+                rb.velocity = Vector2.zero;
+                dashCollider.enabled = false;
+                normalCollider.enabled = true;
+            }
+            
             
         //Hide
         }else if (currentState == SnarkState.HIDE) {
@@ -176,6 +228,21 @@ public class SnarkBehavior : MonoBehaviour
         }
     }
     
+
+    private void StartDash() {
+        dashCollider.enabled = true;
+        normalCollider.enabled = false;
+        _animator.CrossFade("SnarkHorn", 0, 0);
+        timer = 0;
+        dashing = true;
+    }
+
+    private void OnTriggerEnter2D(Collider2D col) {
+        if (col.gameObject.CompareTag("Player")) {
+            col.GetComponent<Health>().Damage(attackDamage);
+        }
+    }
+
     //Gizmos - Debug
     void OnDrawGizmosSelected()
     {

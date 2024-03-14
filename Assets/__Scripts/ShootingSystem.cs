@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
@@ -23,6 +24,7 @@ public class ShootingSystem : MonoBehaviour
     //Balance Vars
     [SerializeField] private int maxAmmo;
     [SerializeField] private int shotDamage;
+    [SerializeField] private float cooldown;
     [SerializeField] private float shotRange;
     [SerializeField] private float aimAngleChange;
     [SerializeField] private float aimLineAngleChange = 25;
@@ -33,11 +35,11 @@ public class ShootingSystem : MonoBehaviour
     [SerializeField] private float aimLineEnd = 5;
     [SerializeField] private float aimLineAngle = 15;
     
-    
     //Private vars
     private int _currentAmmo;
     private int _roundsInMag;//for future use if reloading is added
 
+    private float cooldownTimer = 0;
     private float defaultViewAngle;
     private float defaultViewRange;
     private float defaultAreaRange;
@@ -132,6 +134,10 @@ public class ShootingSystem : MonoBehaviour
     }
     
     private void Update() {
+        if (cooldownTimer >= 0) {
+            cooldownTimer -= Time.deltaTime;
+        }
+        
         //Start to aim
         if (Input.GetKeyDown(KeyCode.Mouse1)) {
             _playerControl.AimSwitch();
@@ -150,7 +156,8 @@ public class ShootingSystem : MonoBehaviour
             aiming = false;
         }
 
-        if (Input.GetKeyDown(KeyCode.Mouse0) && aiming) {//Need to add fire rate limit, not free to mouse click
+        if (Input.GetKeyDown(KeyCode.Mouse0) && aiming && cooldownTimer <= 0) {//Need to add fire rate limit, not free to mouse click
+            cooldownTimer = cooldown;
             float shotAngle = Random.Range(-viewCone.viewAngle / 2 + aimLineAngle,
                                             viewCone.viewAngle / 2 - aimLineAngle);
             Vector3 shotVector = viewCone.DirFromAngle(shotAngle, false);
