@@ -9,5 +9,5 @@ public class GManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape)) {
             SceneManager.LoadScene(0);
         }
-    }
+    } 
 }
